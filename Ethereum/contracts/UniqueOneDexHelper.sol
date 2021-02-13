@@ -632,6 +632,10 @@ contract UniqueOneDexHelper is IERC721Receiver {
             balance = IERC20(token).balanceOf(address(this));
         }
     }
+
+    function onERC721Received(address, address, uint256, bytes memory) public returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
     
     // receive ETH
     function() external payable {
