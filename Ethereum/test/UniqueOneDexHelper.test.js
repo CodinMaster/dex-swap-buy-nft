@@ -34,34 +34,20 @@ const getSwapQuote = async (sellToken, buyToken) => {
   const params = {
     sellToken,
     buyToken,
-    sellAmount: ether("500").toString()
+    sellAmount: ether("500").toString(),
   };
   const response = await axios.get(API_0x, { params });
   const quote = await response.data;
+  const sourceName = quote.sources.find((s) => +s.proportion > 0)
+    ? quote.sources.find((s) => +s.proportion > 0).name
+    : "Wrapping/UnWrapping";
+
+  const price = parseFloat(quote.sellTokenToEthRate).toFixed(4);
   console.log(
-    "Received a quote with price",
-    quote.price,
-    "Swapping with",
-    quote.sources.find((s) => +s.proportion > 0)
-      ? quote.sources.find((s) => +s.proportion > 0).name
-      : "Wrapped"
+    `Swapping using ${sourceName} at price of 1 ETH = ${price} ${params.sellToken}`
   );
+
   return quote;
-};
-
-const toDecimal = (amount) => {
-  decimals = 18;
-  const divisor = new BN("10").pow(new BN(decimals));
-  const beforeDec = new BN(amount).div(divisor).toString();
-  var afterDec = new BN(amount).mod(divisor).toString();
-
-  if (afterDec.length < decimals && afterDec != "0") {
-    // pad with extra zeroes
-    pad = Array(decimals + 1).join("0");
-    afterDec = (pad + afterDec).slice(-decimals);
-  }
-
-  return beforeDec + "." + afterDec;
 };
 
 describe("UniqueOneDexHelper", () => {
@@ -77,7 +63,7 @@ describe("UniqueOneDexHelper", () => {
     // for tests
     this.UniV2Swap = await UniV2Swap.new({ from: admin });
 
-    this.nft = await IERC721.at(NFTDetails.token)
+    this.nft = await IERC721.at(NFTDetails.token);
     this.dai = await IERC20.at(DAI);
 
     // get DAI tokens
@@ -96,7 +82,7 @@ describe("UniqueOneDexHelper", () => {
 
     // get 0x swap quote
     const { sellAmount, to, data } = await getSwapQuote(
-      DAI,
+      "DAI",
       "ETH",
       NFTDetails.price.add(NFTDetails.buyerFeeValue)
     );
@@ -112,17 +98,13 @@ describe("UniqueOneDexHelper", () => {
       NFTDetails.price,
       NFTDetails.sellerFee,
       NFTDetails.buyerFeeValue,
-      [
-        NFTDetails.signature.v,
-        NFTDetails.signature.r,
-        NFTDetails.signature.s
-      ],
+      [NFTDetails.signature.v, NFTDetails.signature.r, NFTDetails.signature.s],
       {
-        from: user
+        from: user,
       }
     );
 
-    const newOwner = await this.nft.ownerOf(NFTDetails.tokenId)
-    expect(newOwner).to.be.eq(user)
+    const newOwner = await this.nft.ownerOf(NFTDetails.tokenId);
+    expect(newOwner).to.be.eq(user);
   });
 });
