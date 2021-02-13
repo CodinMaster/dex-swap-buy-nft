@@ -1,68 +1,27 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Unique.One DEX Integration
+Use 0x DEX Aggregator to allow user to buy NFTs from Unique.One marketplace using any Token of their choice.
 
-## Available Scripts
+## Setup
 
-In the project directory, you can run:
+### React UI:
+1. `npm i` to install required dependencies for react application
+2. `npm run start` to preview application.
 
-### `yarn start`
+### Smart Contracts:
+1. `cd Ethereum` Smart Contracts + Tests are in Ethereum directory.
+2. `npm i` to install required openzeppelin dependencies.
+3. Create an .env file (.env.example provided for reference), and provide Ethereum Node url so that tests can execute on forked mainnet.
+4. `npm run compile` to compile all contracts.
+5. `npm run just-test` to run tests on forked mainnet with real 0x quote values.
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+#### Tests Output:
+![](https://i.imgur.com/yX3BIQK.png)
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+#### Explanation:
+Currently, Unique.One only allows the users to buy NFTs using ETH. This solution enables them to transaction via any token of their choice.
+Say if a user holds DAI, then the best rate for conversion of DAI to ETH is found via 0x's API. It looks across various pools like Uniswap, Sushiswap, Curve, Balancer and more to find the trade with least slippage.
 
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+Our `UniqueOneDexHelper` contract takes the data outputed by API as input, and acts as a middlemen.
+- The user approves this Helper contract to spend their DAI.
+- The Helper contract takes this DAI, Swaps it to ETH, Buys the required NFT, and sends it to the user. All in one transaction!
+- There are also checks to refund any residue of ETH or Token, back to the user and only charge the required ETH for NFT.
