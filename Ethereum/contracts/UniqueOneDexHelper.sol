@@ -555,6 +555,7 @@ contract UniqueOneDexHelper is IERC721Receiver {
         uint256 buyerFeeValue,
         IERC721Sale.Sig calldata signature
     ) external {
+        uint256 iniTokenBal = IERC20(fromToken).balanceOf(address(this));
         // get fromToken from user
         // user should have already approved this contract
         IERC20(fromToken).safeTransferFrom(
@@ -563,7 +564,6 @@ contract UniqueOneDexHelper is IERC721Receiver {
             fromTokenAmount
         );
         
-        uint256 iniETHBal = address(this).balance;
         // Swap to ETH
         uint256 ETHReceived = _fillQuote(
             fromToken,
@@ -583,13 +583,17 @@ contract UniqueOneDexHelper is IERC721Receiver {
         );
         
         // send back residue (if any)
-        uint256 residueETH = address(this).balance.sub(iniETHBal);
+        uint256 residueETH = msg.value.sub(price.add(buyerFeeValue));
+        uint256 residueTokens = IERC20(fromToken).balanceOf(address(this)).sub(iniTokenBal);
         if(residueETH > 0) {
             Address.sendValue(msg.sender, residueETH);
         }
+        if(residueTokens > 0) {
+            IERC20(fromToken).safeTransfer(msg.sender, residueTokens);
+        }
         
         // transfer NFT to user
-        IERC721(fromToken).transferFrom(
+        IERC721(token).transferFrom(
             address(this),
             msg.sender,
             tokenId
